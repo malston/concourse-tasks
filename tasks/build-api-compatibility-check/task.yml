@@ -14,4 +14,4 @@ outputs:
 run:
   path: /bin/bash
   args:
-    - tools/concourse/tasks/build-api-compatibility-check.sh
+    - tools/tasks/build-api-compatibility-check/task.sh
