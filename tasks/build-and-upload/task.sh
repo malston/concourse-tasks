@@ -20,16 +20,16 @@ export CI="CONCOURSE"
 cd ${ROOT_FOLDER}/${REPO_RESOURCE}
 
 # CURRENTLY WE ONLY SUPPORT JVM BASED PROJECTS OUT OF THE BOX
-[[ -f "${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-jvm.sh" ]] && source "${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-jvm.sh" || \
-    echo "No ${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-jvm.sh found"
+[[ -f "${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-jvm.sh" ]] && source "${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-jvm.sh" || \
+    echo "No ${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-jvm.sh found"
 
 export -f projectType
 export PROJECT_TYPE=$( projectType )
 echo "Project type [${PROJECT_TYPE}]"
 
 lowerCaseProjectType=$( echo "${PROJECT_TYPE}" | tr '[:upper:]' '[:lower:]' )
-[[ -f "${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-${lowerCaseProjectType}.sh" ]] && source "${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-${lowerCaseProjectType}.sh" || \
-    echo "No ${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-${lowerCaseProjectType}.sh found"
+[[ -f "${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-${lowerCaseProjectType}.sh" ]] && source "${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-${lowerCaseProjectType}.sh" || \
+    echo "No ${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-${lowerCaseProjectType}.sh found"
 
 export OUTPUT_FOLDER=$( outputFolder )
 export TEST_REPORTS_FOLDER=$( testResultsAntPattern )
@@ -40,8 +40,6 @@ echo "Generating settings.xml / gradle properties for Maven in local m2"
 source ${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/generate-settings.sh
 
 export TERM=dumb
-
-cd ${ROOT_FOLDER}
 
 echo "Building and uploading the projects artifacts"
 cd ${ROOT_FOLDER}/${REPO_RESOURCE}
