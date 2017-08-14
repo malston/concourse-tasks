@@ -23,14 +23,6 @@ cd ${ROOT_FOLDER}/${REPO_RESOURCE}
 [[ -f "${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-jvm.sh" ]] && source "${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-jvm.sh" || \
     echo "No ${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-jvm.sh found"
 
-export -f projectType
-export PROJECT_TYPE=$( projectType )
-echo "Project type [${PROJECT_TYPE}]"
-
-lowerCaseProjectType=$( echo "${PROJECT_TYPE}" | tr '[:upper:]' '[:lower:]' )
-[[ -f "${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-${lowerCaseProjectType}.sh" ]] && source "${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-${lowerCaseProjectType}.sh" || \
-    echo "No ${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/build-and-upload/projectType/pipeline-${lowerCaseProjectType}.sh found"
-
 export OUTPUT_FOLDER=$( outputFolder )
 export TEST_REPORTS_FOLDER=$( testResultsAntPattern )
 
