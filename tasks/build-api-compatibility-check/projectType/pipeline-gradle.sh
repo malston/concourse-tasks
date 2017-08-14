@@ -1,16 +1,6 @@
 #!/bin/bash
 set -e
 
-function build() {
-    echo "Additional Build Options [${BUILD_OPTIONS}]"
-
-    if [[ "${CI}" == "CONCOURSE" ]]; then
-        ./gradlew clean build deploy -PnewVersion=${PIPELINE_VERSION} -DREPO_WITH_BINARIES=${REPO_WITH_BINARIES} --stacktrace ${BUILD_OPTIONS} || ( $( printTestResults ) && return 1)
-    else
-        ./gradlew clean build deploy -PnewVersion=${PIPELINE_VERSION} -DREPO_WITH_BINARIES=${REPO_WITH_BINARIES} --stacktrace ${BUILD_OPTIONS}
-    fi
-}
-
 function apiCompatibilityCheck() {
     echo "Running retrieval of group and artifactid to download all dependencies. It might take a while..."
     projectGroupId=$( retrieveGroupId )
@@ -50,46 +40,10 @@ function printTestResults() {
     echo -e "\n\nBuild failed!!! - will print all test results to the console (it's the easiest way to debug anything later)\n\n" && tail -n +1 "$( testResultsAntPattern )"
 }
 
-function retrieveStubRunnerIds() {
-    echo "$( ./gradlew stubIds -q | tail -1 )"
-}
-
-function runSmokeTests() {
-    local applicationHost="${APPLICATION_URL}"
-    local stubrunnerHost="${STUBRUNNER_URL}"
-    echo "Running smoke tests"
-
-    if [[ "${CI}" == "CONCOURSE" ]]; then
-        ./gradlew smoke -PnewVersion=${PIPELINE_VERSION} -Dapplication.url="${applicationHost}" -Dstubrunner.url="${stubrunnerHost}" || ( echo "$( printTestResults )" && return 1)
-    else
-        ./gradlew smoke -PnewVersion=${PIPELINE_VERSION} -Dapplication.url="${applicationHost}" -Dstubrunner.url="${stubrunnerHost}"
-    fi
-}
-
-function runE2eTests() {
-    # Retrieves Application URL
-    retrieveApplicationUrl
-    local applicationHost="${APPLICATION_URL}"
-    echo "Running e2e tests"
-
-    if [[ "${CI}" == "CONCOURSE" ]]; then
-        ./gradlew e2e -PnewVersion=${PIPELINE_VERSION} -Dapplication.url="${applicationHost}" ${BUILD_OPTIONS} || ( $( printTestResults ) && return 1)
-    else
-        ./gradlew e2e -PnewVersion=${PIPELINE_VERSION} -Dapplication.url="${applicationHost}" ${BUILD_OPTIONS}
-    fi
-}
-
-function outputFolder() {
-    echo "build/libs"
-}
-
 function testResultsAntPattern() {
     echo "**/test-results/*.xml"
 }
 
 export -f build
 export -f apiCompatibilityCheck
-export -f runSmokeTests
-export -f runE2eTests
-export -f outputFolder
 export -f testResultsAntPattern
