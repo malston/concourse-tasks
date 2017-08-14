@@ -14,4 +14,4 @@ outputs:
 run:
   path: /bin/bash
   args:
-    - tools/concourse/tasks/build-and-upload.sh
+    - tools/tasks/build-and-upload/task.sh
