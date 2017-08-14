@@ -19,7 +19,7 @@ cd ${ROOT_FOLDER}/${REPO_RESOURCE}
 #
 # export OUTPUT_FOLDER=$( outputFolder )
 # export TEST_REPORTS_FOLDER=$( testResultsAntPattern )
-# 
+#
 # echo "Output folder [${OUTPUT_FOLDER}]"
 #
 # echo "Generating settings.xml / gradle properties for Maven in local m2"
@@ -29,7 +29,5 @@ export TERM=dumb
 
 echo "Deploying the built application on test environment"
 cd ${ROOT_FOLDER}/${REPO_RESOURCE}
-
-__DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 apiCompatibilityCheck
