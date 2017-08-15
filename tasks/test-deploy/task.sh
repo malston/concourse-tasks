@@ -14,7 +14,7 @@ echo "Root folder is [${ROOT_FOLDER}]"
 echo "Repo resource folder is [${REPO_RESOURCE}]"
 echo "Tools resource folder is [${TOOLS_RESOURCE}]"
 echo "Version resource folder is [${VERSION_RESOURCE}]"
-echo "Current local directory is [${cwd}]"
+echo "Current working directory is [${cwd}]"
 
 echo "Retrieving version"
 export PIPELINE_VERSION=$( cat ${ROOT_FOLDER}/${VERSION_RESOURCE}/version )
