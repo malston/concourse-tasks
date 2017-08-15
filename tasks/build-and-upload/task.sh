@@ -37,7 +37,7 @@ export TEST_REPORTS_FOLDER=$( testResultsAntPattern )
 echo "Output folder [${OUTPUT_FOLDER}]"
 
 echo "Generating settings.xml / gradle properties for Maven in local m2"
-source ${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/generate-settings.sh
+source ${cwd}/generate-settings.sh
 
 export TERM=dumb
 
