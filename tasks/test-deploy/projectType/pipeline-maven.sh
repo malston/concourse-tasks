@@ -12,3 +12,11 @@ function retrieveAppName() {
     result=$( echo "${result}" | tail -1 )
     echo "${result}"
 }
+
+function outputFolder() {
+    echo "target"
+}
+
+function testResultsAntPattern() {
+    echo "**/surefire-reports/*"
+}
