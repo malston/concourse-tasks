@@ -37,14 +37,6 @@ function logInToPaas() {
     cf login -u "${cfUsername}" -p "${cfPassword}" -o "${cfOrg}" -s "${cfSpace}"
 }
 
-function deleteAppInstance() {
-    local serviceName="${1}"
-    local lowerCaseAppName=$( toLowerCase "${serviceName}" )
-    local APP_NAME="${lowerCaseAppName}"
-    echo "Deleting application [${APP_NAME}]"
-    cf delete -f ${APP_NAME} || echo "Failed to delete the app. Continuing with the script"
-}
-
 function deployAndRestartAppWithNameForSmokeTests() {
     local appName="${1}"
     local jarName="${2}"
