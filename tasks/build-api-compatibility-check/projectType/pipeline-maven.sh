@@ -49,6 +49,10 @@ function printTestResults() {
     echo -e "\n\nBuild failed!!! - will print all test results to the console (it's the easiest way to debug anything later)\n\n" && tail -n +1 "$( testResultsAntPattern )"
 }
 
+function outputFolder() {
+    echo "target"
+}
+
 function testResultsAntPattern() {
     echo "**/surefire-reports/*"
 }
