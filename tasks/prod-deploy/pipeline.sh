@@ -119,8 +119,7 @@ function setEnvVar() {
 function restartApp() {
     local appName="${1}"
     echo "Restarting app with name [${appName}]"
-    cf re
-    start "${appName}"
+    cf restart "${appName}"
 }
 
 function toLowerCase() {
