@@ -21,7 +21,7 @@ export PIPELINE_VERSION=$( cat ${ROOT_FOLDER}/${VERSION_RESOURCE}/version )
 echo "Retrieved version is [${PIPELINE_VERSION}]"
 
 export CI="CONCOURSE"
-export ENVIRONMENT=TEST
+export ENVIRONMENT=PROD
 
 source ${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/common.sh
 
