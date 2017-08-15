@@ -177,6 +177,81 @@ function deployService() {
     esac
 }
 
+function deleteService() {
+    local serviceType=$( toLowerCase "${1}" )
+    local serviceName="${2}"
+    case ${serviceType} in
+    mysql)
+      deleteMySql "${serviceName}"
+      ;;
+    rabbitmq)
+      deleteRabbitMq "${serviceName}"
+      ;;
+    *)
+      deleteServiceWithName "${serviceName}" || echo "Failed to delete service with type [${serviceType}] and name [${serviceName}]"
+      ;;
+    esac
+}
+
+function deployRabbitMq() {
+    local serviceName="${1:-rabbitmq-github}"
+    echo "Waiting for RabbitMQ to start"
+    local foundApp=$( serviceExists "rabbitmq" "${serviceName}" )
+    if [[ "${foundApp}" == "false" ]]; then
+        hostname="${hostname}-${PAAS_HOSTNAME_UUID}"
+        (cf cs cloudamqp lemur "${serviceName}" && echo "Started RabbitMQ") ||
+        (cf cs p-rabbitmq standard "${serviceName}" && echo "Started RabbitMQ for PCF Dev")
+    else
+        echo "Service [${serviceName}] already started"
+    fi
+}
+
+function findAppByName() {
+    local serviceName="${1}"
+    echo $( cf s | awk -v "app=${serviceName}" '$1 == app {print($0)}' )
+}
+
+function serviceExists() {
+    local serviceType="${1}"
+    local serviceName="${2}"
+    local foundApp=$( findAppByName "${serviceName}" )
+    if [[ "${foundApp}" == "" ]]; then
+        echo "false"
+    else
+        echo "true"
+    fi
+}
+
+function deleteMySql() {
+    local serviceName="${1:-mysql-github}"
+    deleteServiceWithName ${serviceName}
+}
+
+function deleteRabbitMq() {
+    local serviceName="${1:-rabbitmq-github}"
+    deleteServiceWithName ${serviceName}
+}
+
+function deleteServiceWithName() {
+    local serviceName="${1}"
+    cf delete -f ${serviceName} || echo "Failed to delete app [${serviceName}]"
+    cf delete-service -f ${serviceName} || echo "Failed to delete service [${serviceName}]"
+}
+
+function deployMySql() {
+    local serviceName="${1:-mysql-github}"
+    echo "Waiting for MySQL to start"
+    local foundApp=$( serviceExists "mysql" "${serviceName}" )
+    if [[ "${foundApp}" == "false" ]]; then
+        hostname="${hostname}-${PAAS_HOSTNAME_UUID}"
+        (cf cs p-mysql 100mb-dev "${serviceName}" && echo "Started MySQL") ||
+        (cf cs p-mysql 512mb "${serviceName}" && echo "Started MySQL for PCF Dev") ||
+        (cf cs cleardb spark "${serviceName}" && echo "Started MySQL for PWS")
+    else
+        echo "Service [${serviceName}] already started"
+    fi
+}
+
 function propagatePropertiesForTests() {
     local projectArtifactId="${1}"
     local stubRunnerHost="${2:-stubrunner-${projectArtifactId}}"
