@@ -20,6 +20,8 @@ export ENVIRONMENT=TEST
 
 source ${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/common.sh
 
+cd ${ROOT_FOLDER}/${REPO_RESOURCE}
+
 # CURRENTLY WE ONLY SUPPORT JVM BASED PROJECTS OUT OF THE BOX
 [[ -f "${__DIR}/projectType/pipeline-jvm.sh" ]] && source "${__DIR}/projectType/pipeline-jvm.sh" || \
     echo "No ${__DIR}/projectType/pipeline-jvm.sh found"
@@ -27,7 +29,6 @@ source ${ROOT_FOLDER}/${TOOLS_RESOURCE}/tasks/common.sh
 export TERM=dumb
 
 echo "Deploying the built application on test environment"
-cd ${ROOT_FOLDER}/${REPO_RESOURCE}
 
 [[ -f "${__DIR}/pipeline.sh" ]] && source "${__DIR}/pipeline.sh" || \
     echo "No pipeline.sh found"
