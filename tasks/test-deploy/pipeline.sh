@@ -48,19 +48,23 @@ function deleteAppInstance() {
 function deployAndRestartAppWithNameForSmokeTests() {
     local appName="${1}"
     local jarName="${2}"
-    local rabbitName="rabbitmq-${appName}"
-    local eurekaName="eureka-${appName}"
-    local mysqlName="mysql-${appName}"
+    local rabbitName="${3}"
+    local eurekaName="${4}"
+    local mysqlName="${5}"
     local profiles="cloud,smoke"
     local lowerCaseAppName=$( toLowerCase "${appName}" )
     deleteAppInstance "${appName}"
     echo "Deploying and restarting app with name [${appName}] and jar name [${jarName}] and env [${env}]"
     deployAppWithName "${appName}" "${jarName}" "${ENVIRONMENT}" 'false'
-    bindService "${rabbitName}" "${appName}"
+    if [[ "${rabbitName}" != "" ]]; then
+        bindService "${rabbitName}" "${appName}"
+    fi
     if [[ "${eurekaName}" != "" ]]; then
         bindService "${eurekaName}" "${appName}"
     fi
-    bindService "${mysqlName}" "${appName}"
+    if [[ "${mysqlName}" != "" ]]; then
+        bindService "${mysqlName}" "${appName}"
+    fi
     setEnvVar "${lowerCaseAppName}" 'spring.profiles.active' "${profiles}"
     restartApp "${appName}"
 }
@@ -135,6 +139,42 @@ function bindService() {
     local appName="${2}"
     echo "Binding service [${serviceName}] to app [${appName}]"
     cf bind-service "${appName}" "${serviceName}"
+}
+
+function deployService() {
+    local serviceType=$( toLowerCase "${1}" )
+    local serviceName="${2}"
+    local serviceCoordinates=$( if [[ "${3}" == "null" ]] ; then echo ""; else echo "${3}" ; fi )
+    case ${serviceType} in
+    rabbitmq)
+      deployRabbitMq "${serviceName}"
+      ;;
+    mysql)
+      deployMySql "${serviceName}"
+      ;;
+    eureka)
+      PREVIOUS_IFS="${IFS}"
+      IFS=: read -r EUREKA_GROUP_ID EUREKA_ARTIFACT_ID EUREKA_VERSION <<< "${serviceCoordinates}"
+      IFS="${PREVIOUS_IFS}"
+      downloadAppBinary ${REPO_WITH_BINARIES} ${EUREKA_GROUP_ID} ${EUREKA_ARTIFACT_ID} ${EUREKA_VERSION}
+      deployEureka "${EUREKA_ARTIFACT_ID}-${EUREKA_VERSION}" "${serviceName}" "${ENVIRONMENT}"
+      ;;
+    stubrunner)
+      UNIQUE_EUREKA_NAME="$( echo ${PARSED_YAML} | jq --arg x ${LOWER_CASE_ENV} '.[$x].services[] | select(.type == "eureka") | .name' | sed 's/^"\(.*\)"$/\1/' )"
+      UNIQUE_RABBIT_NAME="$( echo ${PARSED_YAML} | jq --arg x ${LOWER_CASE_ENV} '.[$x].services[] | select(.type == "rabbitmq") | .name' | sed 's/^"\(.*\)"$/\1/' )"
+      PREVIOUS_IFS="${IFS}"
+      IFS=: read -r STUBRUNNER_GROUP_ID STUBRUNNER_ARTIFACT_ID STUBRUNNER_VERSION <<< "${serviceCoordinates}"
+      IFS="${PREVIOUS_IFS}"
+      PARSED_STUBRUNNER_USE_CLASSPATH="$( echo ${PARSED_YAML} | jq --arg x ${LOWER_CASE_ENV} '.[$x].services[] | select(.type == "stubrunner") | .useClasspath' | sed 's/^"\(.*\)"$/\1/' )"
+      STUBRUNNER_USE_CLASSPATH=$( if [[ "${PARSED_STUBRUNNER_USE_CLASSPATH}" == "null" ]] ; then echo "false"; else echo "${PARSED_STUBRUNNER_USE_CLASSPATH}" ; fi )
+      downloadAppBinary ${REPO_WITH_BINARIES} ${STUBRUNNER_GROUP_ID} ${STUBRUNNER_ARTIFACT_ID} ${STUBRUNNER_VERSION}
+      deployStubRunnerBoot "${STUBRUNNER_ARTIFACT_ID}-${STUBRUNNER_VERSION}" "${REPO_WITH_BINARIES}" "${UNIQUE_RABBIT_NAME}" "${UNIQUE_EUREKA_NAME}" "${ENVIRONMENT}" "${serviceName}"
+      ;;
+    *)
+      echo "Unknown service with type [${serviceType}] and name [${serviceName}]"
+      return 1
+      ;;
+    esac
 }
 
 function propagatePropertiesForTests() {
