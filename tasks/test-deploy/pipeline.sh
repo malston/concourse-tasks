@@ -130,6 +130,13 @@ function restartApp() {
     cf restart "${appName}"
 }
 
+function bindService() {
+    local serviceName="${1}"
+    local appName="${2}"
+    echo "Binding service [${serviceName}] to app [${appName}]"
+    cf bind-service "${appName}" "${serviceName}"
+}
+
 function propagatePropertiesForTests() {
     local projectArtifactId="${1}"
     local stubRunnerHost="${2:-stubrunner-${projectArtifactId}}"
