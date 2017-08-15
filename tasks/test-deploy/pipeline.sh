@@ -104,14 +104,6 @@ function deleteAppInstance() {
     cf delete -f ${APP_NAME} || echo "Failed to delete the app. Continuing with the script"
 }
 
-function setEnvVarIfMissing() {
-    local appName="${1}"
-    local key="${2}"
-    local value="${3}"
-    echo "Setting env var [${key}] -> [${value}] for app [${appName}] if missing"
-    cf env "${appName}" | grep "${key}" || setEnvVar appName key value
-}
-
 function setEnvVar() {
     local appName="${1}"
     local key="${2}"
