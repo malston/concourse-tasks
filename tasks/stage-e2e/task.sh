@@ -40,6 +40,10 @@ export TERM=dumb
 
 echo "Testing the built application on stage environment"
 
+lowerCaseProjectType=$( echo "${PROJECT_TYPE}" | tr '[:upper:]' '[:lower:]' )
+[[ -f "${CWD}/projectType/pipeline-${lowerCaseProjectType}.sh" ]] && source "${CWD}/projectType/pipeline-${lowerCaseProjectType}.sh" || \
+    echo "No ${CWD}/projectType/pipeline-${lowerCaseProjectType}.sh found"
+
 [[ -f "${CWD}/pipeline.sh" ]] && source "${CWD}/pipeline.sh" || \
     echo "No ${cwd}/pipeline.sh found"
 
