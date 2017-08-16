@@ -2,8 +2,6 @@
 
 set -o errexit
 
-CWD="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 export ROOT_FOLDER=$( pwd )
 export REPO_RESOURCE=repo
 export TOOLS_RESOURCE=tools
@@ -39,7 +37,9 @@ export TERM=dumb
 
 echo "Deploying the built application on test environment"
 
-[[ -f "${CWD}/pipeline.sh" ]] && source "${CWD}/pipeline.sh" || \
-    echo "No ${cwd}/pipeline.sh found"
+lowerCaseProjectType=$( echo "${PROJECT_TYPE}" | tr '[:upper:]' '[:lower:]' )
+__DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+[[ -f "${__DIR}/projectType/pipeline-${lowerCaseProjectType}.sh" ]] && source "${__DIR}/projectType/pipeline-${lowerCaseProjectType}.sh" || \
+    echo "No projectType/pipeline-${lowerCaseProjectType}.sh found"
 
 apiCompatibilityCheck
