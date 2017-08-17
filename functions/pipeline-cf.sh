@@ -86,6 +86,7 @@ function deployAppWithName() {
     local lowerCaseAppName=$( toLowerCase "${appName}" )
     local hostname="${lowerCaseAppName}"
     local memory="${APP_MEMORY_LIMIT:-256m}"
+    local timeout="${PUSH_TIMEOUT_IN_SECONDS:-300}"
     local buildPackUrl="${JAVA_BUILDPACK_URL:-https://github.com/cloudfoundry/java-buildpack.git#v3.8.1}"
     if [[ "${PAAS_HOSTNAME_UUID}" != "" ]]; then
         hostname="${hostname}-${PAAS_HOSTNAME_UUID}"
@@ -95,7 +96,7 @@ function deployAppWithName() {
     fi
     echo "Deploying app with name [${lowerCaseAppName}], env [${env}] with manifest [${useManifest}] and host [${hostname}]"
     if [[ ! -z "${manifestOption}" ]]; then
-        cf push "${lowerCaseAppName}" -m "${memory}" -i 1 -p "${OUTPUT_FOLDER}/${jarName}.jar" -n "${hostname}" --no-start -b "${buildPackUrl}" ${manifestOption}
+        cf push "${lowerCaseAppName}" -m "${memory}" -i 1 -t "${timeout}" -p "${OUTPUT_FOLDER}/${jarName}.jar" -n "${hostname}" --no-start -b "${buildPackUrl}" ${manifestOption}
     else
         cf push "${lowerCaseAppName}" -p "${OUTPUT_FOLDER}/${jarName}.jar" -n "${hostname}" --no-start -b "${buildPackUrl}"
     fi
@@ -127,11 +128,66 @@ function restartApp() {
     cf restart "${appName}"
 }
 
+function deployEureka() {
+    local jarName="${1}"
+    local appName="${2}"
+    local env="${3}"
+    echo "Deploying Eureka. Options - jar name [${jarName}], app name [${appName}], env [${env}]"
+    local fileExists="true"
+    local fileName="`pwd`/${OUTPUT_FOLDER}/${jarName}.jar"
+    if [[ ! -f "${fileName}" ]]; then
+        fileExists="false"
+    fi
+    deployAppWithName "${appName}" "${jarName}" "${env}"
+    restartApp "${appName}"
+    createServiceWithName "${appName}"
+}
+
+function deployStubRunnerBoot() {
+    local jarName="${1}"
+    local repoWithJars="${2}"
+    local rabbitName="${3}"
+    local eurekaName="${4}"
+    local env="${5:-test}"
+    local stubRunnerName="${6:-stubrunner}"
+    local fileExists="true"
+    local fileName="`pwd`/${OUTPUT_FOLDER}/${jarName}.jar"
+    local stubRunnerUseClasspath="${STUBRUNNER_USE_CLASSPATH:-false}"
+    if [[ ! -f "${fileName}" ]]; then
+        fileExists="false"
+    fi
+    echo "Deploying Stub Runner. Options jar name [${jarName}], app name [${stubRunnerName}]"
+    deployAppWithName "${stubRunnerName}" "${jarName}" "${env}" "false"
+    local prop="$( retrieveStubRunnerIds )"
+    echo "Found following stub runner ids [${prop}]"
+    setEnvVar "${stubRunnerName}" "stubrunner.ids" "${prop}"
+    if [[ "${stubRunnerUseClasspath}" == "false" ]]; then
+        setEnvVar "${stubRunnerName}" "stubrunner.repositoryRoot" "${repoWithJars}"
+    fi
+    if [[ "${rabbitName}" != "" ]]; then
+        bindService "${rabbitName}" "${stubRunnerName}"
+        setEnvVar "${stubRunnerName}" "spring.rabbitmq.addresses" "\${vcap.services.${rabbitName}.credentials.uri}"
+    fi
+    if [[ "${eurekaName}" != "" ]]; then
+        bindService "${eurekaName}" "${stubRunnerName}"
+        setEnvVar "${stubRunnerName}" "eureka.client.serviceUrl.defaultZone" "\${vcap.services.${eurekaName}.credentials.uri:http://127.0.0.1:8761}/eureka/"
+    fi
+    restartApp "${stubRunnerName}"
+}
+
 function bindService() {
     local serviceName="${1}"
     local appName="${2}"
     echo "Binding service [${serviceName}] to app [${appName}]"
     cf bind-service "${appName}" "${serviceName}"
+}
+
+function createServiceWithName() {
+    local name="${1}"
+    echo "Creating service with name [${name}]"
+    APPLICATION_DOMAIN=`cf apps | grep ${name} | tr -s ' ' | cut -d' ' -f 6 | cut -d, -f1`
+    JSON='{"uri":"http://'${APPLICATION_DOMAIN}'"}'
+    cf create-user-provided-service "${name}" -p "${JSON}" || echo "Service already created. Proceeding with the script"
 }
 
 function deployService() {
@@ -237,7 +293,8 @@ function deployMySql() {
     local foundApp=$( serviceExists "mysql" "${serviceName}" )
     if [[ "${foundApp}" == "false" ]]; then
         hostname="${hostname}-${PAAS_HOSTNAME_UUID}"
-        (cf cs p-mysql 100mb-dev "${serviceName}" && echo "Started MySQL") ||
+        (cf cs p-mysql 100mb "${serviceName}" && echo "Started MySQL") ||
+        (cf cs p-mysql 100mb-dev "${serviceName}" && echo "Started MySQL for Dev") ||
         (cf cs p-mysql 512mb "${serviceName}" && echo "Started MySQL for PCF Dev") ||
         (cf cs cleardb spark "${serviceName}" && echo "Started MySQL for PWS")
     else
